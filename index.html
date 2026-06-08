@@ -111,7 +111,7 @@
 </main>
 
 <footer class="text-center py-6 text-xs text-slate-300">
-  🇸🇮 MojeDelo · Remotive · We Work Remotely
+  Remotive · Jobicy · Arbeitnow · The Muse · We Work Remotely
 </footer>
 
 <script>
@@ -237,12 +237,84 @@ async function fetchWWR() {
   } catch(e) { console.error('WWR error', e); return []; }
 }
 
+async function fetchJobicy() {
+  const tags = ['marketing','advertising','social-media','paid-social','ppc','seo-sem'];
+  const jobs = [];
+  for (const tag of tags) {
+    try {
+      const r = await fetch(`https://jobicy.com/api/v0/remote-jobs?count=50&tag=${tag}`);
+      if (!r.ok) continue;
+      const d = await r.json();
+      for (const j of d.jobs ?? []) {
+        const loc = j.jobGeo || 'Worldwide';
+        if (!accessibleFromSI(loc)) continue;
+        const text = `${j.jobTitle} ${j.jobExcerpt ?? ''} ${j.jobDescription ?? ''}`;
+        if (!matchesMarketing(text)) continue;
+        jobs.push({
+          id: 'jcy-' + j.id, title: j.jobTitle, company: j.companyName,
+          logo: j.companyLogo || '', location: loc, type: 'remote',
+          salary: j.annualSalaryMin ? `$${j.annualSalaryMin/1000}k–$${j.annualSalaryMax/1000}k` : '',
+          tags: extractTags(text), postedAt: timeAgo(j.pubDate),
+          url: j.url, source: 'Jobicy', si: false,
+        });
+      }
+    } catch(e) { console.error('Jobicy error', e); }
+  }
+  return jobs;
+}
+
+async function fetchArbeitnow() {
+  try {
+    const r = await fetch('https://arbeitnow.com/api/job-board-api');
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.data ?? []).filter(j => j.remote).map(j => {
+      const text = `${j.title} ${j.description ?? ''} ${(j.tags??[]).join(' ')}`;
+      if (!matchesMarketing(text)) return null;
+      return {
+        id: 'an-' + j.slug, title: j.title, company: j.company_name,
+        logo: '', location: j.location || 'Europe', type: j.remote ? 'remote' : 'hybrid',
+        salary: '', tags: extractTags(text),
+        postedAt: timeAgo(new Date(j.created_at * 1000).toISOString()),
+        url: j.url, source: 'Arbeitnow', si: false,
+      };
+    }).filter(Boolean);
+  } catch(e) { console.error('Arbeitnow error', e); return []; }
+}
+
+async function fetchTheMuse() {
+  try {
+    const r = await fetch('https://www.themuse.com/api/public/jobs?category=Marketing+%26+PR&page=1&page_size=100&descending=true');
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.results ?? []).map(j => {
+      const locs = (j.locations ?? []).map(l => l.name).join(', ') || 'Worldwide';
+      const isRemote = locs.toLowerCase().includes('remote') || locs.toLowerCase().includes('flexible');
+      if (!isRemote) return null;
+      const text = `${j.name} ${j.contents ?? ''}`;
+      if (!matchesMarketing(text)) return null;
+      return {
+        id: 'muse-' + j.id, title: j.name, company: j.company?.name ?? '',
+        logo: j.company?.refs?.logo_image ?? '', location: locs, type: 'remote',
+        salary: '', tags: extractTags(text),
+        postedAt: j.publication_date ? timeAgo(j.publication_date) : 'Nedavno',
+        url: j.refs?.landing_page ?? '', source: 'The Muse', si: false,
+      };
+    }).filter(Boolean);
+  } catch(e) { console.error('TheMuse error', e); return []; }
+}
+
 async function loadJobs() {
   renderSkeletons();
-  const [a, b] = await Promise.allSettled([fetchRemotive(), fetchWWR()]);
+  const [a, b, c, d, e] = await Promise.allSettled([
+    fetchRemotive(), fetchWWR(), fetchJobicy(), fetchArbeitnow(), fetchTheMuse(),
+  ]);
   const jobs = [
     ...(a.status==='fulfilled'?a.value:[]),
     ...(b.status==='fulfilled'?b.value:[]),
+    ...(c.status==='fulfilled'?c.value:[]),
+    ...(d.status==='fulfilled'?d.value:[]),
+    ...(e.status==='fulfilled'?e.value:[]),
   ];
   const seen = new Set();
   allJobs = jobs.filter(j => {
