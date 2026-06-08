@@ -5,12 +5,22 @@ import { fetchMojeDelo, fetchKarierna, fetchZaposlitev } from "@/lib/slovenian-b
 
 function timeAgo(dateStr: string): string {
   const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+// Locations accessible from Slovenia
+const SI_ACCESSIBLE = [
+  "worldwide", "global", "anywhere", "all countries", "international",
+  "europe", "european", "eu ", "emea", "remote", "slovenia",
+];
+
+function accessibleFromSlovenia(location: string): boolean {
+  const l = location.toLowerCase();
+  return SI_ACCESSIBLE.some((kw) => l.includes(kw));
 }
 
 async function fetchRemotive(): Promise<Job[]> {
@@ -25,6 +35,8 @@ async function fetchRemotive(): Promise<Job[]> {
       if (!res.ok) continue;
       const data = await res.json();
       for (const job of data.jobs ?? []) {
+        const loc = job.candidate_required_location || "Worldwide";
+        if (!accessibleFromSlovenia(loc)) continue;
         const text = `${job.title} ${job.description ?? ""}`;
         if (!matchesMarketing(text)) continue;
         all.push({
@@ -32,14 +44,13 @@ async function fetchRemotive(): Promise<Job[]> {
           title: job.title,
           company: job.company_name,
           companyLogo: job.company_logo,
-          location: job.candidate_required_location || "Worldwide",
+          location: loc,
           type: "remote",
           salary: job.salary || undefined,
           tags: extractTags(text),
           postedAt: timeAgo(job.publication_date),
           url: job.url,
           source: "Remotive",
-          description: job.description?.replace(/<[^>]*>/g, "").slice(0, 300),
         });
       }
     } catch {
@@ -47,39 +58,6 @@ async function fetchRemotive(): Promise<Job[]> {
     }
   }
   return all;
-}
-
-async function fetchRemoteOK(): Promise<Job[]> {
-  try {
-    const res = await fetch("https://remoteok.com/api", {
-      headers: { "User-Agent": "JobSeeker/1.0" },
-      next: { revalidate: 1800 },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    const jobs: Job[] = [];
-    for (const job of data) {
-      if (!job.position) continue;
-      const text = `${job.position} ${(job.tags ?? []).join(" ")} ${job.description ?? ""}`;
-      if (!matchesMarketing(text)) continue;
-      jobs.push({
-        id: `remoteok-${job.id}`,
-        title: job.position,
-        company: job.company,
-        companyLogo: job.logo,
-        location: job.location || "Worldwide",
-        type: "remote",
-        salary: job.salary || undefined,
-        tags: extractTags(text),
-        postedAt: timeAgo(new Date(job.epoch * 1000).toISOString()),
-        url: job.url || `https://remoteok.com/remote-jobs/${job.slug}`,
-        source: "RemoteOK",
-      });
-    }
-    return jobs;
-  } catch {
-    return [];
-  }
 }
 
 async function fetchWeworkremotely(): Promise<Job[]> {
@@ -99,16 +77,17 @@ async function fetchWeworkremotely(): Promise<Job[]> {
       const link = get("link") || get("url");
       const pubDate = get("pubDate");
       const region = get("region");
-      const type_ = get("type");
       const company = title.split(":")[0]?.trim() ?? "";
       const jobTitle = title.split(":").slice(1).join(":").trim() || title;
-      const text = `${title} ${type_}`;
+      const text = `${title}`;
+      const loc = region || "Worldwide";
       if (!matchesMarketing(text)) return null;
+      if (!accessibleFromSlovenia(loc)) return null;
       return {
         id: `wwr-${i}`,
         title: jobTitle,
         company,
-        location: region || "Worldwide",
+        location: loc,
         type: "remote" as const,
         tags: extractTags(text),
         postedAt: pubDate ? timeAgo(pubDate) : "Recently",
@@ -123,23 +102,21 @@ async function fetchWeworkremotely(): Promise<Job[]> {
 
 export async function GET() {
   const results = await Promise.allSettled([
-    fetchRemotive(),
-    fetchRemoteOK(),
-    fetchWeworkremotely(),
     fetchMojeDelo(),
     fetchKarierna(),
     fetchZaposlitev(),
+    fetchRemotive(),
+    fetchWeworkremotely(),
   ]);
 
   const jobs: Job[] = results.flatMap((r) =>
     r.status === "fulfilled" ? r.value : []
   );
 
-  // Slovenian jobs first, then remote global
+  // Slovenian boards first, then worldwide/Europe remote
   const slovenian = jobs.filter((j) => j.location === "Slovenia");
   const global_ = jobs.filter((j) => j.location !== "Slovenia");
 
-  // Deduplicate by normalised title+company
   const seen = new Set<string>();
   const unique = [...slovenian, ...global_].filter((j) => {
     const key = `${j.title.toLowerCase().trim()}-${j.company.toLowerCase().trim()}`;
