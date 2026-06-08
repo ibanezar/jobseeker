@@ -17,6 +17,7 @@
     .badge-ww { background:#f0fdf4; color:#15803d; }
     #alert-panel { display:none; }
     #alert-panel.open { display:flex; }
+    select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -75,37 +76,47 @@
   </div>
 
   <!-- Filters -->
-  <div class="bg-white rounded-2xl border border-slate-100 p-4 mb-5 flex flex-wrap gap-3 items-center">
-    <input id="search" type="text" placeholder="Search jobs…"
-      class="flex-1 min-w-48 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+  <div class="bg-white rounded-2xl border border-slate-100 p-4 mb-5 space-y-3">
 
-    <div class="flex gap-2 flex-wrap">
-      <button data-type="remote" class="type-btn px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 text-slate-500 hover:border-green-400 hover:text-green-600 transition-colors">🌍 Remote</button>
-      <button data-type="hybrid" class="type-btn px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 text-slate-500 hover:border-yellow-400 hover:text-yellow-600 transition-colors">🏢 Hybrid</button>
+    <!-- Row 1: search + country + work type -->
+    <div class="flex flex-wrap gap-2 items-center">
+      <input id="search" type="text" placeholder="Search jobs…"
+        class="flex-1 min-w-40 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+
+      <select id="country-select"
+        class="border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer min-w-36">
+        <option value="">🌐 All countries</option>
+      </select>
+
+      <div class="flex gap-2">
+        <button data-type="remote" class="type-btn px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 text-slate-500 hover:border-green-400 hover:text-green-600 transition-colors">🌍 Remote</button>
+        <button data-type="hybrid" class="type-btn px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 text-slate-500 hover:border-yellow-400 hover:text-yellow-600 transition-colors">🏢 Hybrid</button>
+      </div>
     </div>
 
-    <div class="flex gap-1.5 flex-wrap">
-      <button data-tag="Meta Ads"           class="tag-btn tag bg-blue-50   text-blue-600   opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Meta Ads</button>
-      <button data-tag="Google Ads"         class="tag-btn tag bg-red-50    text-red-600    opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Google Ads</button>
-      <button data-tag="Media Buying"       class="tag-btn tag bg-purple-50 text-purple-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Media Buying</button>
-      <button data-tag="Creative Strategy"  class="tag-btn tag bg-pink-50   text-pink-600   opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Creative Strategy</button>
-      <button data-tag="PPC"                class="tag-btn tag bg-orange-50 text-orange-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">PPC</button>
-      <button data-tag="Performance Marketing" class="tag-btn tag bg-green-50 text-green-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Performance</button>
-      <button data-tag="AI Design"          class="tag-btn tag bg-indigo-50 text-indigo-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">AI Design</button>
-      <button data-tag="TikTok Ads"         class="tag-btn tag bg-fuchsia-50 text-fuchsia-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">TikTok Ads</button>
+    <!-- Row 2: skill tags + count/clear -->
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button data-tag="Meta Ads"              class="tag-btn tag bg-blue-50    text-blue-600   opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Meta Ads</button>
+      <button data-tag="Google Ads"            class="tag-btn tag bg-red-50     text-red-600    opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Google Ads</button>
+      <button data-tag="Media Buying"          class="tag-btn tag bg-purple-50  text-purple-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Media Buying</button>
+      <button data-tag="Creative Strategy"     class="tag-btn tag bg-pink-50    text-pink-600   opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Creative Strategy</button>
+      <button data-tag="PPC"                   class="tag-btn tag bg-orange-50  text-orange-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">PPC</button>
+      <button data-tag="Performance Marketing" class="tag-btn tag bg-green-50   text-green-600  opacity-50 hover:opacity-100 transition-opacity cursor-pointer">Performance</button>
+      <button data-tag="AI Design"             class="tag-btn tag bg-indigo-50  text-indigo-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">AI Design</button>
+      <button data-tag="TikTok Ads"            class="tag-btn tag bg-fuchsia-50 text-fuchsia-600 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">TikTok Ads</button>
+      <div class="flex items-center gap-2 ml-auto">
+        <span id="count" class="text-xs text-slate-400 whitespace-nowrap"></span>
+        <button id="btn-clear" class="text-xs text-indigo-500 hover:text-indigo-700 hidden">Clear all</button>
+      </div>
     </div>
 
-    <div class="flex items-center gap-2 ml-auto">
-      <span id="count" class="text-xs text-slate-400 whitespace-nowrap"></span>
-      <button id="btn-clear" class="text-xs text-indigo-500 hover:text-indigo-700 hidden">Clear</button>
-    </div>
   </div>
 
   <!-- Job list -->
   <div id="job-list" class="space-y-3"></div>
   <div id="empty" class="text-center py-20 text-slate-400 hidden">
     <p class="text-lg mb-1">No jobs match your filters</p>
-    <p class="text-sm">Try adjusting your search</p>
+    <p class="text-sm">Try adjusting your search or country</p>
   </div>
 </main>
 
@@ -125,19 +136,19 @@ const KEYWORDS = [
 ];
 
 const TAG_MAP = [
-  {tag:"Meta Ads",       kw:["meta ads","facebook ads"]},
-  {tag:"Google Ads",     kw:["google ads","sem","search engine marketing"]},
-  {tag:"Media Buying",   kw:["media buy"]},
-  {tag:"Creative Strategy", kw:["creative strateg"]},
-  {tag:"AI Design",      kw:["ai design","ai creative"]},
-  {tag:"PPC",            kw:["ppc","pay-per-click"]},
+  {tag:"Meta Ads",              kw:["meta ads","facebook ads"]},
+  {tag:"Google Ads",            kw:["google ads","sem","search engine marketing"]},
+  {tag:"Media Buying",          kw:["media buy"]},
+  {tag:"Creative Strategy",     kw:["creative strateg"]},
+  {tag:"AI Design",             kw:["ai design","ai creative"]},
+  {tag:"PPC",                   kw:["ppc","pay-per-click"]},
   {tag:"Performance Marketing", kw:["performance market"]},
-  {tag:"TikTok Ads",     kw:["tiktok"]},
-  {tag:"Programmatic",   kw:["programmatic"]},
-  {tag:"Growth Marketing",kw:["growth"]},
-  {tag:"E-commerce",     kw:["ecommerce","e-commerce","d2c","dtc"]},
-  {tag:"Social Media",   kw:["social media"]},
-  {tag:"UGC",            kw:["ugc"]},
+  {tag:"TikTok Ads",            kw:["tiktok"]},
+  {tag:"Programmatic",          kw:["programmatic"]},
+  {tag:"Growth Marketing",      kw:["growth"]},
+  {tag:"E-commerce",            kw:["ecommerce","e-commerce","d2c","dtc"]},
+  {tag:"Social Media",          kw:["social media"]},
+  {tag:"UGC",                   kw:["ugc"]},
 ];
 
 const TAG_COLORS = {
@@ -155,6 +166,59 @@ const TAG_COLORS = {
   "Social Media":"bg-sky-100 text-sky-700",
   "UGC":"bg-rose-100 text-rose-700",
 };
+
+// Country flags for common regions
+const COUNTRY_FLAGS = {
+  "Worldwide":"🌍","USA":"🇺🇸","UK":"🇬🇧","Europe":"🇪🇺","Canada":"🇨🇦",
+  "Australia":"🇦🇺","Germany":"🇩🇪","France":"🇫🇷","Netherlands":"🇳🇱",
+  "Spain":"🇪🇸","Portugal":"🇵🇹","Poland":"🇵🇱","Sweden":"🇸🇪","Denmark":"🇩🇰",
+  "Norway":"🇳🇴","Finland":"🇫🇮","Switzerland":"🇨🇭","Austria":"🇦🇹","Italy":"🇮🇹",
+  "Romania":"🇷🇴","Czech Republic":"🇨🇿","Hungary":"🇭🇺","Ukraine":"🇺🇦",
+  "India":"🇮🇳","Brazil":"🇧🇷","Mexico":"🇲🇽","Israel":"🇮🇱","Singapore":"🇸🇬",
+  "Latin America":"🌎","Asia/APAC":"🌏","Africa":"🌍","Multiple":"🗺️",
+};
+
+function normalizeCountry(loc) {
+  const t = (loc || '').toLowerCase().trim();
+  if (!t) return 'Worldwide';
+  if (/worldwide|global|anywhere|all countries|international|remote|any country/.test(t)) return 'Worldwide';
+  if (/united states|united state\b|usa\b|\bus only\b|\bus,|\bus\/|^us$|u\.s\.a?\.?/.test(t)) return 'USA';
+  if (/united kingdom|great britain|\buk\b|\buk,|\buk\/|england/.test(t)) return 'UK';
+  if (/\beurope\b|european union|\beu\b/.test(t)) return 'Europe';
+  if (/canada/.test(t)) return 'Canada';
+  if (/australia/.test(t)) return 'Australia';
+  if (/germany|deutschland/.test(t)) return 'Germany';
+  if (/france/.test(t)) return 'France';
+  if (/netherlands|holland/.test(t)) return 'Netherlands';
+  if (/spain/.test(t)) return 'Spain';
+  if (/portugal/.test(t)) return 'Portugal';
+  if (/poland/.test(t)) return 'Poland';
+  if (/sweden/.test(t)) return 'Sweden';
+  if (/denmark/.test(t)) return 'Denmark';
+  if (/norway/.test(t)) return 'Norway';
+  if (/finland/.test(t)) return 'Finland';
+  if (/switzerland/.test(t)) return 'Switzerland';
+  if (/austria/.test(t)) return 'Austria';
+  if (/italy/.test(t)) return 'Italy';
+  if (/romania/.test(t)) return 'Romania';
+  if (/czech/.test(t)) return 'Czech Republic';
+  if (/hungary/.test(t)) return 'Hungary';
+  if (/ukraine/.test(t)) return 'Ukraine';
+  if (/india/.test(t)) return 'India';
+  if (/brazil/.test(t)) return 'Brazil';
+  if (/mexico/.test(t)) return 'Mexico';
+  if (/israel/.test(t)) return 'Israel';
+  if (/singapore/.test(t)) return 'Singapore';
+  if (/latin america|latam/.test(t)) return 'Latin America';
+  if (/asia|apac/.test(t)) return 'Asia/APAC';
+  if (/africa/.test(t)) return 'Africa';
+  if (/south america/.test(t)) return 'Latin America';
+  // Multiple countries in one string
+  if (/,|\/| or | and /.test(t)) return 'Multiple';
+  // Capitalize first word as fallback
+  return loc.split(',')[0].split('/')[0].trim()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
 
 function matchesMarketing(text) {
   const t = text.toLowerCase();
@@ -179,8 +243,9 @@ function timeAgo(dateStr) {
 // ── State ──────────────────────────────────────────────────────────────────
 let allJobs = [];
 let search = '';
-let activeTypes = new Set();
-let activeTags = new Set();
+let activeTypes  = new Set();
+let activeTags   = new Set();
+let activeCountry = '';
 
 // ── Fetch ──────────────────────────────────────────────────────────────────
 async function fetchRemotive() {
@@ -194,12 +259,14 @@ async function fetchRemotive() {
       for (const j of d.jobs ?? []) {
         const text = `${j.title} ${j.description ?? ''}`;
         if (!matchesMarketing(text)) continue;
+        const rawLoc = j.candidate_required_location || 'Worldwide';
         jobs.push({
           id: 'r-' + j.id,
           title: j.title,
           company: j.company_name,
           logo: j.company_logo,
-          location: j.candidate_required_location || 'Worldwide',
+          location: rawLoc,
+          country: normalizeCountry(rawLoc),
           type: 'remote',
           salary: j.salary || '',
           tags: extractTags(text),
@@ -219,32 +286,31 @@ async function fetchRemoteOK() {
     const r = await fetch('https://remoteok.com/api', {headers:{'User-Agent':'JobSeeker/1.0'}});
     if (!r.ok) return [];
     const data = await r.json();
-    return data
-      .filter(j => j.position)
-      .map(j => {
-        const text = `${j.position} ${(j.tags??[]).join(' ')} ${j.description??''}`;
-        if (!matchesMarketing(text)) return null;
-        return {
-          id: 'ro-' + j.id,
-          title: j.position,
-          company: j.company,
-          logo: j.logo,
-          location: j.location || 'Worldwide',
-          type: 'remote',
-          salary: j.salary || '',
-          tags: extractTags(text),
-          postedAt: timeAgo(new Date(j.epoch * 1000).toISOString()),
-          url: j.url || `https://remoteok.com/remote-jobs/${j.slug}`,
-          source: 'RemoteOK',
-          si: false,
-        };
-      }).filter(Boolean);
+    return data.filter(j => j.position).map(j => {
+      const text = `${j.position} ${(j.tags??[]).join(' ')} ${j.description??''}`;
+      if (!matchesMarketing(text)) return null;
+      const rawLoc = j.location || 'Worldwide';
+      return {
+        id: 'ro-' + j.id,
+        title: j.position,
+        company: j.company,
+        logo: j.logo,
+        location: rawLoc,
+        country: normalizeCountry(rawLoc),
+        type: 'remote',
+        salary: j.salary || '',
+        tags: extractTags(text),
+        postedAt: timeAgo(new Date(j.epoch * 1000).toISOString()),
+        url: j.url || `https://remoteok.com/remote-jobs/${j.slug}`,
+        source: 'RemoteOK',
+        si: false,
+      };
+    }).filter(Boolean);
   } catch { return []; }
 }
 
 async function fetchWWR() {
   try {
-    // Use a CORS proxy for the RSS feed
     const r = await fetch('https://api.allorigins.win/raw?url=' +
       encodeURIComponent('https://weworkremotely.com/categories/remote-marketing-jobs.rss'));
     if (!r.ok) return [];
@@ -255,18 +321,20 @@ async function fetchWWR() {
         item.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`))?.[1] ??
         item.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`))?.[1] ?? '';
       const title = get('title');
-      const link = get('link') || get('url');
+      const link  = get('link') || get('url');
       const pubDate = get('pubDate');
-      const region = get('region');
-      const company = title.split(':')[0]?.trim() ?? '';
+      const region  = get('region');
+      const company  = title.split(':')[0]?.trim() ?? '';
       const jobTitle = title.split(':').slice(1).join(':').trim() || title;
       if (!matchesMarketing(title)) return null;
+      const rawLoc = region || 'Worldwide';
       return {
         id: 'wwr-' + i,
         title: jobTitle,
         company,
         logo: '',
-        location: region || 'Worldwide',
+        location: rawLoc,
+        country: normalizeCountry(rawLoc),
         type: 'remote',
         salary: '',
         tags: extractTags(title),
@@ -287,21 +355,45 @@ async function loadJobs() {
     ...(b.status==='fulfilled'?b.value:[]),
     ...(c.status==='fulfilled'?c.value:[]),
   ];
-  // deduplicate
   const seen = new Set();
   allJobs = jobs.filter(j => {
     const k = `${j.title.toLowerCase().trim()}-${j.company.toLowerCase().trim()}`;
     if (seen.has(k)) return false;
     seen.add(k); return true;
   });
+  buildCountryFilter();
   updateStats();
   render();
 }
 
+// ── Country filter ─────────────────────────────────────────────────────────
+function buildCountryFilter() {
+  const counts = {};
+  for (const j of allJobs) counts[j.country] = (counts[j.country] || 0) + 1;
+
+  // Sort: Worldwide first, then by count desc
+  const sorted = Object.entries(counts).sort(([a], [b]) => {
+    if (a === 'Worldwide') return -1;
+    if (b === 'Worldwide') return 1;
+    return counts[b] - counts[a];
+  });
+
+  const sel = document.getElementById('country-select');
+  // Keep the "All countries" option, replace the rest
+  sel.innerHTML = '<option value="">🌐 All countries</option>';
+  for (const [country, count] of sorted) {
+    const flag = COUNTRY_FLAGS[country] || '📍';
+    const opt = document.createElement('option');
+    opt.value = country;
+    opt.textContent = `${flag} ${country} (${count})`;
+    if (country === activeCountry) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
 // ── Render ─────────────────────────────────────────────────────────────────
 function renderSkeletons() {
-  const el = document.getElementById('job-list');
-  el.innerHTML = Array.from({length:6}).map(() => `
+  document.getElementById('job-list').innerHTML = Array.from({length:6}).map(() => `
     <div class="bg-white rounded-2xl border border-slate-100 p-5">
       <div class="flex gap-4">
         <div class="w-12 h-12 rounded-xl skeleton shrink-0"></div>
@@ -314,7 +406,7 @@ function renderSkeletons() {
     </div>`).join('');
 }
 
-function filtered() {
+function getFiltered() {
   return allJobs.filter(j => {
     if (search) {
       const hay = `${j.title} ${j.company} ${j.tags.join(' ')} ${j.location}`.toLowerCase();
@@ -322,17 +414,17 @@ function filtered() {
     }
     if (activeTypes.size && !activeTypes.has(j.type)) return false;
     if (activeTags.size && ![...activeTags].some(t => j.tags.includes(t))) return false;
+    if (activeCountry && j.country !== activeCountry) return false;
     return true;
   });
 }
 
 function jobCard(j) {
-  const typeClass = j.type === 'remote'
-    ? 'bg-green-50 text-green-600'
-    : 'bg-yellow-50 text-yellow-600';
+  const typeClass = j.type === 'remote' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600';
   const typeLabel = j.type === 'remote' ? '🌍 Remote' : '🏢 Hybrid';
-  const srcClass = j.si ? 'badge-sl' : 'badge-ww';
-  const srcLabel = (j.si ? '🇸🇮 ' : '') + j.source;
+  const srcClass  = j.si ? 'badge-sl' : 'badge-ww';
+  const srcLabel  = (j.si ? '🇸🇮 ' : '') + j.source;
+  const flag      = COUNTRY_FLAGS[j.country] || '📍';
   const tags = j.tags.slice(0,4).map(t =>
     `<span class="tag ${TAG_COLORS[t]||'bg-slate-100 text-slate-600'}">${t}</span>`
   ).join('');
@@ -356,7 +448,7 @@ function jobCard(j) {
             <span class="tag ${srcClass} shrink-0 ml-1">${srcLabel}</span>
           </div>
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-slate-400">
-            <span>📍 ${j.location}</span>
+            <span>${flag} ${j.location}</span>
             <span class="tag ${typeClass}">${typeLabel}</span>
             ${j.salary ? `<span class="text-slate-500 font-medium">${j.salary}</span>` : ''}
             <span class="ml-auto">🕐 ${j.postedAt}</span>
@@ -368,38 +460,39 @@ function jobCard(j) {
 }
 
 function render() {
-  const jobs = filtered();
+  const jobs = getFiltered();
   const el = document.getElementById('job-list');
-  const empty = document.getElementById('empty');
   const countEl = document.getElementById('count');
   const clearBtn = document.getElementById('btn-clear');
 
   countEl.textContent = `${jobs.length} jobs`;
-  const hasFilters = search || activeTypes.size || activeTags.size;
+  const hasFilters = search || activeTypes.size || activeTags.size || activeCountry;
   clearBtn.classList.toggle('hidden', !hasFilters);
 
   if (jobs.length === 0 && allJobs.length > 0) {
     el.innerHTML = '';
-    empty.classList.remove('hidden');
+    document.getElementById('empty').classList.remove('hidden');
   } else {
-    empty.classList.add('hidden');
+    document.getElementById('empty').classList.add('hidden');
     el.innerHTML = jobs.map(jobCard).join('');
   }
 }
 
 function updateStats() {
-  const remote = allJobs.filter(j => j.type === 'remote').length;
-  const hybrid = allJobs.filter(j => j.type === 'hybrid').length;
-  const si = allJobs.filter(j => j.si).length;
-  document.getElementById('stat-remote').textContent = remote;
-  document.getElementById('stat-hybrid').textContent = hybrid;
-  document.getElementById('stat-si').textContent = si;
+  document.getElementById('stat-remote').textContent = allJobs.filter(j => j.type==='remote').length;
+  document.getElementById('stat-hybrid').textContent = allJobs.filter(j => j.type==='hybrid').length;
+  document.getElementById('stat-si').textContent     = allJobs.filter(j => j.si).length;
   document.getElementById('stats').classList.remove('hidden');
 }
 
 // ── Controls ───────────────────────────────────────────────────────────────
 document.getElementById('search').addEventListener('input', e => {
   search = e.target.value.toLowerCase().trim();
+  render();
+});
+
+document.getElementById('country-select').addEventListener('change', e => {
+  activeCountry = e.target.value;
   render();
 });
 
@@ -423,39 +516,31 @@ document.querySelectorAll('.type-btn').forEach(btn => {
 document.querySelectorAll('.tag-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const t = btn.dataset.tag;
-    if (activeTags.has(t)) {
-      activeTags.delete(t);
-      btn.style.opacity = '0.5';
-    } else {
-      activeTags.add(t);
-      btn.style.opacity = '1';
-    }
+    if (activeTags.has(t)) { activeTags.delete(t); btn.style.opacity='0.5'; }
+    else                   { activeTags.add(t);    btn.style.opacity='1'; }
     render();
   });
 });
 
 document.getElementById('btn-clear').addEventListener('click', () => {
-  search = '';
-  activeTypes.clear();
-  activeTags.clear();
+  search = ''; activeTypes.clear(); activeTags.clear(); activeCountry = '';
   document.getElementById('search').value = '';
+  document.getElementById('country-select').value = '';
   document.querySelectorAll('.type-btn').forEach(b => {
     b.classList.remove('border-green-400','text-green-600','border-yellow-400','text-yellow-600','font-bold');
     b.classList.add('border-slate-200','text-slate-500');
   });
-  document.querySelectorAll('.tag-btn').forEach(b => b.style.opacity = '0.5');
+  document.querySelectorAll('.tag-btn').forEach(b => b.style.opacity='0.5');
   render();
 });
 
 document.getElementById('btn-refresh').addEventListener('click', loadJobs);
 
 // ── Alert modal ────────────────────────────────────────────────────────────
-document.getElementById('btn-alert').addEventListener('click', () => {
-  document.getElementById('alert-panel').classList.add('open');
-});
-document.getElementById('btn-close-alert').addEventListener('click', () => {
-  document.getElementById('alert-panel').classList.remove('open');
-});
+document.getElementById('btn-alert').addEventListener('click', () =>
+  document.getElementById('alert-panel').classList.add('open'));
+document.getElementById('btn-close-alert').addEventListener('click', () =>
+  document.getElementById('alert-panel').classList.remove('open'));
 document.getElementById('alert-panel').addEventListener('click', e => {
   if (e.target === document.getElementById('alert-panel'))
     document.getElementById('alert-panel').classList.remove('open');
@@ -472,8 +557,7 @@ document.getElementById('btn-subscribe').addEventListener('click', async () => {
   }
   try {
     const res = await fetch('/api/subscribe', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({email, types:['remote','hybrid'], tags:[]}),
     });
     if (res.status === 409) {
@@ -482,9 +566,7 @@ document.getElementById('btn-subscribe').addEventListener('click', async () => {
     } else if (res.ok) {
       msg.textContent = '✓ Subscribed! Check your inbox for confirmation.';
       msg.className = 'text-xs mb-3 text-green-600';
-    } else {
-      throw new Error();
-    }
+    } else throw new Error();
   } catch {
     msg.textContent = 'Error — make sure the app server is running.';
     msg.className = 'text-xs mb-3 text-red-500';
