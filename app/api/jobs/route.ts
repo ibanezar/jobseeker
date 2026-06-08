@@ -12,15 +12,19 @@ function timeAgo(dateStr: string): string {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-// Locations accessible from Slovenia
-const SI_ACCESSIBLE = [
-  "worldwide", "global", "anywhere", "all countries", "international",
-  "europe", "european", "eu ", "emea", "remote", "slovenia",
+// Block locations explicitly restricted to non-EU regions
+const SI_BLOCKED = [
+  "usa only", "us only", "united states only", "us residents only",
+  "canada only", "australia only", "new zealand only",
+  "latin america only", "latam only", "india only",
+  "apac only", "asia only", "africa only",
+  "uk only", "us & canada", "us and canada",
+  "north america only",
 ];
 
 function accessibleFromSlovenia(location: string): boolean {
   const l = location.toLowerCase();
-  return SI_ACCESSIBLE.some((kw) => l.includes(kw));
+  return !SI_BLOCKED.some((kw) => l.includes(kw));
 }
 
 async function fetchRemotive(): Promise<Job[]> {
