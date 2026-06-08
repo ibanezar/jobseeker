@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Job } from "@/lib/types";
 import { matchesMarketing, extractTags } from "@/lib/keywords";
+import { fetchMojeDelo, fetchKarierna, fetchZaposlitev } from "@/lib/slovenian-boards";
 
 function timeAgo(dateStr: string): string {
   const date = new Date(dateStr);
@@ -121,21 +122,26 @@ async function fetchWeworkremotely(): Promise<Job[]> {
 }
 
 export async function GET() {
-  const [remotive, remoteok, wwr] = await Promise.allSettled([
+  const results = await Promise.allSettled([
     fetchRemotive(),
     fetchRemoteOK(),
     fetchWeworkremotely(),
+    fetchMojeDelo(),
+    fetchKarierna(),
+    fetchZaposlitev(),
   ]);
 
-  const jobs: Job[] = [
-    ...(remotive.status === "fulfilled" ? remotive.value : []),
-    ...(remoteok.status === "fulfilled" ? remoteok.value : []),
-    ...(wwr.status === "fulfilled" ? wwr.value : []),
-  ];
+  const jobs: Job[] = results.flatMap((r) =>
+    r.status === "fulfilled" ? r.value : []
+  );
 
-  // deduplicate by normalised title+company
+  // Slovenian jobs first, then remote global
+  const slovenian = jobs.filter((j) => j.location === "Slovenia");
+  const global_ = jobs.filter((j) => j.location !== "Slovenia");
+
+  // Deduplicate by normalised title+company
   const seen = new Set<string>();
-  const unique = jobs.filter((j) => {
+  const unique = [...slovenian, ...global_].filter((j) => {
     const key = `${j.title.toLowerCase().trim()}-${j.company.toLowerCase().trim()}`;
     if (seen.has(key)) return false;
     seen.add(key);

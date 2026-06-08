@@ -20,13 +20,21 @@ const TAG_COLORS: Record<string, string> = {
   "UGC": "bg-rose-100 text-rose-700",
 };
 
+const SLOVENIAN_SOURCES = new Set(["MojeDelo", "Karierna", "Zaposlitev"]);
+
 export default function JobCard({ job }: { job: Job }) {
+  const isSlovenian = SLOVENIAN_SOURCES.has(job.source);
   return (
     <a
       href={job.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block bg-white rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all duration-200 p-5"
+      className={clsx(
+        "group block bg-white rounded-2xl border hover:shadow-lg transition-all duration-200 p-5",
+        isSlovenian
+          ? "border-blue-100 hover:border-blue-300"
+          : "border-gray-100 hover:border-indigo-200"
+      )}
     >
       <div className="flex items-start gap-4">
         {/* Logo */}
@@ -90,8 +98,15 @@ export default function JobCard({ job }: { job: Job }) {
                   {tag}
                 </span>
               ))}
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 ml-auto">
-                {job.source}
+              <span
+                className={clsx(
+                  "text-xs px-2 py-0.5 rounded-full ml-auto font-medium",
+                  isSlovenian
+                    ? "bg-blue-50 text-blue-500"
+                    : "bg-gray-50 text-gray-400"
+                )}
+              >
+                {isSlovenian ? "🇸🇮 " : ""}{job.source}
               </span>
             </div>
           )}

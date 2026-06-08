@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Job, JobFilter } from "@/lib/types";
 import JobCard from "@/components/JobCard";
 import FilterBar from "@/components/FilterBar";
-import { RefreshCw, Briefcase, Globe, Zap } from "lucide-react";
+import AlertModal from "@/components/AlertModal";
+import { RefreshCw, Briefcase, Globe, Zap, Bell } from "lucide-react";
 
 export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -12,6 +13,7 @@ export default function Home() {
   const [error, setError] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [filter, setFilter] = useState<JobFilter>({ search: "", types: [], tags: [] });
+  const [showAlert, setShowAlert] = useState(false);
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -37,7 +39,7 @@ export default function Home() {
     return jobs.filter((job) => {
       if (filter.search) {
         const q = filter.search.toLowerCase();
-        const haystack = `${job.title} ${job.company} ${job.tags.join(" ")}`.toLowerCase();
+        const haystack = `${job.title} ${job.company} ${job.tags.join(" ")} ${job.location}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       if (filter.types.length && !filter.types.includes(job.type as "remote" | "hybrid")) return false;
@@ -49,6 +51,7 @@ export default function Home() {
   const stats = useMemo(() => ({
     remote: jobs.filter((j) => j.type === "remote").length,
     hybrid: jobs.filter((j) => j.type === "hybrid").length,
+    slovenian: jobs.filter((j) => j.location === "Slovenia").length,
     sources: [...new Set(jobs.map((j) => j.source))].length,
   }), [jobs]);
 
@@ -66,20 +69,29 @@ export default function Home() {
               <span className="ml-2 text-xs text-gray-400">Slovenia · Marketing & Media</span>
             </div>
           </div>
-          <button
-            onClick={fetchJobs}
-            disabled={loading}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            {lastRefresh ? (
-              <span className="hidden sm:inline">
-                {lastRefresh.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            ) : (
-              "Refresh"
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowAlert(true)}
+              className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Set alert</span>
+            </button>
+            <button
+              onClick={fetchJobs}
+              disabled={loading}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              {lastRefresh ? (
+                <span className="hidden sm:inline">
+                  {lastRefresh.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              ) : (
+                "Refresh"
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -95,7 +107,7 @@ export default function Home() {
 
           {/* Stats */}
           {!loading && jobs.length > 0 && (
-            <div className="flex items-center justify-center gap-6 mt-5">
+            <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 mt-5">
               <div className="flex items-center gap-1.5 text-sm text-gray-500">
                 <Globe className="w-4 h-4 text-green-500" />
                 <span className="font-semibold text-gray-800">{stats.remote}</span> remote
@@ -104,6 +116,12 @@ export default function Home() {
                 <Briefcase className="w-4 h-4 text-yellow-500" />
                 <span className="font-semibold text-gray-800">{stats.hybrid}</span> hybrid
               </div>
+              {stats.slovenian > 0 && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                  <span>🇸🇮</span>
+                  <span className="font-semibold text-gray-800">{stats.slovenian}</span> in Slovenia
+                </div>
+              )}
               <div className="flex items-center gap-1.5 text-sm text-gray-500">
                 <Zap className="w-4 h-4 text-indigo-500" />
                 <span className="font-semibold text-gray-800">{stats.sources}</span> sources
@@ -116,6 +134,15 @@ export default function Home() {
           {/* Sidebar */}
           <div className="lg:sticky lg:top-20">
             <FilterBar filter={filter} onChange={setFilter} total={filtered.length} />
+
+            {/* Alert CTA in sidebar */}
+            <button
+              onClick={() => setShowAlert(true)}
+              className="mt-4 w-full flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl py-3 transition-colors"
+            >
+              <Bell className="w-4 h-4" />
+              Get email alerts for new jobs
+            </button>
           </div>
 
           {/* Job list */}
@@ -159,8 +186,17 @@ export default function Home() {
       </main>
 
       <footer className="text-center py-8 text-xs text-gray-300 mt-4">
-        Aggregates from Remotive · RemoteOK · We Work Remotely · updates every 30 min
+        Aggregates from MojeDelo · Karierna · Zaposlitev · Remotive · RemoteOK · We Work Remotely
+        <br />· updates every 30 min ·
+        <button
+          onClick={() => setShowAlert(true)}
+          className="text-indigo-300 hover:text-indigo-500 ml-1 transition-colors"
+        >
+          set alert
+        </button>
       </footer>
+
+      {showAlert && <AlertModal onClose={() => setShowAlert(false)} />}
     </div>
   );
 }
