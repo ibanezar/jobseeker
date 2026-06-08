@@ -68,9 +68,9 @@
     </h1>
     <p class="text-slate-500 text-sm">Media buying · Meta Ads · Google Ads · Creative strategy · AI design</p>
     <div id="stats" class="flex items-center justify-center gap-5 mt-4 text-sm text-slate-500 hidden">
+      <span>🇸🇮 <strong id="stat-si" class="text-slate-800">0</strong> slovensko</span>
       <span>🌍 <strong id="stat-remote" class="text-slate-800">0</strong> remote</span>
       <span>🏢 <strong id="stat-hybrid" class="text-slate-800">0</strong> hybrid</span>
-      <span>📋 <strong id="stat-total" class="text-slate-800">0</strong> skupaj</span>
     </div>
   </div>
 
@@ -106,7 +106,7 @@
 </main>
 
 <footer class="text-center py-6 text-xs text-slate-300">
-  Remotive · We Work Remotely (Europe/Worldwide only)
+  🇸🇮 MojeDelo · Remotive · We Work Remotely
 </footer>
 
 <script>
@@ -233,15 +233,54 @@ async function fetchWWR() {
   } catch { return []; }
 }
 
+async function fetchMojeDelo() {
+  const queries = ['marketing', 'digitalni+marketing', 'oglaševanje'];
+  const jobs = [];
+  for (const q of queries) {
+    try {
+      const r = await fetch('https://api.allorigins.win/raw?url=' +
+        encodeURIComponent(`https://www.mojedelo.com/rss/dela?q=${q}`));
+      if (!r.ok) continue;
+      const xml = await r.text();
+      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const get = tag =>
+          item.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`))?.[1] ??
+          item.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`))?.[1] ?? '';
+        const title = get('title').replace(/<[^>]*>/g,'').trim();
+        const link  = get('link');
+        const pubDate = get('pubDate');
+        const desc  = get('description').replace(/<[^>]*>/g,' ').trim();
+        const company = get('author') || get('dc:creator') || '';
+        if (!title || !matchesMarketing(`${title} ${desc}`)) continue;
+        const type = /hybrid|hibrid/i.test(desc) ? 'hybrid' : 'remote';
+        jobs.push({
+          id: 'md-' + (link.split('/').pop() || i),
+          title, company: company || 'Podjetje',
+          logo: '', location: 'Slovenija',
+          type, salary: '',
+          tags: extractTags(`${title} ${desc}`),
+          postedAt: pubDate ? timeAgo(pubDate) : 'Nedavno',
+          url: link, source: 'MojeDelo', si: true,
+        });
+      }
+    } catch {}
+  }
+  return jobs;
+}
+
 async function loadJobs() {
   renderSkeletons();
-  const [a, b] = await Promise.allSettled([fetchRemotive(), fetchWWR()]);
-  const jobs = [
+  const [si, a, b] = await Promise.allSettled([fetchMojeDelo(), fetchRemotive(), fetchWWR()]);
+  const slovenian = si.status==='fulfilled' ? si.value : [];
+  const global_   = [
     ...(a.status==='fulfilled'?a.value:[]),
     ...(b.status==='fulfilled'?b.value:[]),
   ];
+  // Slovenian first, then worldwide/EU
   const seen = new Set();
-  allJobs = jobs.filter(j => {
+  allJobs = [...slovenian, ...global_].filter(j => {
     const k = `${j.title.toLowerCase().trim()}-${j.company.toLowerCase().trim()}`;
     if (seen.has(k)) return false;
     seen.add(k); return true;
@@ -288,7 +327,9 @@ function locLabel(loc) {
 function jobCard(j) {
   const typeClass = j.type === 'remote' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600';
   const typeLabel = j.type === 'remote' ? '🌍 Remote' : '🏢 Hybrid';
-  const srcClass  = j.source === 'Remotive' ? 'badge-eu' : 'badge-eu';
+  const srcClass  = j.si ? 'badge-si' : 'badge-eu';
+  const srcLabel  = (j.si ? '🇸🇮 ' : '') + j.source;
+  const borderCls = j.si ? 'border-blue-100' : 'border-slate-100';
   const tags = j.tags.slice(0,4).map(t =>
     `<span class="tag ${TAG_COLORS[t]||'bg-slate-100 text-slate-600'}">${t}</span>`
   ).join('');
@@ -298,7 +339,7 @@ function jobCard(j) {
 
   return `
     <a href="${j.url}" target="_blank" rel="noopener noreferrer"
-       class="card block bg-white rounded-2xl border border-slate-100 p-4 sm:p-5">
+       class="card block bg-white rounded-2xl border ${borderCls} p-4 sm:p-5">
       <div class="flex items-start gap-4">
         <div class="shrink-0 w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
           ${logoHtml}
@@ -309,7 +350,7 @@ function jobCard(j) {
               <div class="font-semibold text-slate-900 text-sm sm:text-base leading-tight line-clamp-1">${j.title}</div>
               <div class="text-xs text-slate-500 mt-0.5">${j.company}</div>
             </div>
-            <span class="tag ${srcClass} shrink-0 ml-1">${j.source}</span>
+            <span class="tag ${srcClass} shrink-0 ml-1">${srcLabel}</span>
           </div>
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-slate-400">
             <span>${locLabel(j.location)}</span>
@@ -343,9 +384,9 @@ function render() {
 }
 
 function updateStats() {
+  document.getElementById('stat-si').textContent     = allJobs.filter(j=>j.si).length;
   document.getElementById('stat-remote').textContent = allJobs.filter(j=>j.type==='remote').length;
   document.getElementById('stat-hybrid').textContent = allJobs.filter(j=>j.type==='hybrid').length;
-  document.getElementById('stat-total').textContent  = allJobs.length;
   document.getElementById('stats').classList.remove('hidden');
 }
 
