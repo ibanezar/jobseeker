@@ -103,6 +103,11 @@
     <p class="text-lg mb-1">Ni zadetkov</p>
     <p class="text-sm">Poskusi drugačne filtre</p>
   </div>
+  <div id="error" class="text-center py-20 hidden">
+    <p class="text-lg text-red-400 mb-2">Napaka pri nalaganju</p>
+    <p class="text-sm text-slate-400 mb-4">API ni dosegljiv. Preveri konzolo (F12) za več info.</p>
+    <button onclick="loadJobs()" class="text-sm text-indigo-500 hover:underline">↻ Poskusi znova</button>
+  </div>
 </main>
 
 <footer class="text-center py-6 text-xs text-slate-300">
@@ -201,18 +206,17 @@ async function fetchRemotive() {
           id: 'r-' + j.id, title: j.title, company: j.company_name,
           logo: j.company_logo, location: loc, type: 'remote',
           salary: j.salary || '', tags: extractTags(text),
-          postedAt: timeAgo(j.publication_date), url: j.url, source: 'Remotive',
+          postedAt: timeAgo(j.publication_date), url: j.url, source: 'Remotive', si: false,
         });
       }
-    } catch {}
+    } catch(e) { console.error('Remotive error', e); }
   }
   return jobs;
 }
 
 async function fetchWWR() {
   try {
-    const r = await fetch('https://api.allorigins.win/raw?url=' +
-      encodeURIComponent('https://weworkremotely.com/categories/remote-marketing-jobs.rss'));
+    const r = await fetch('https://weworkremotely.com/categories/remote-marketing-jobs.rss');
     if (!r.ok) return [];
     const xml = await r.text();
     const items = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
@@ -228,63 +232,30 @@ async function fetchWWR() {
       if (!matchesMarketing(title) || !accessibleFromSI(loc)) return null;
       return { id:'wwr-'+i, title:jobTitle, company, logo:'', location:loc,
         type:'remote', salary:'', tags:extractTags(title),
-        postedAt: pubDate ? timeAgo(pubDate) : 'Nedavno', url:link, source:'We Work Remotely' };
+        postedAt: pubDate ? timeAgo(pubDate) : 'Nedavno', url:link, source:'We Work Remotely', si:false };
     }).filter(Boolean);
-  } catch { return []; }
-}
-
-async function fetchMojeDelo() {
-  const queries = ['marketing', 'digitalni+marketing', 'oglaševanje'];
-  const jobs = [];
-  for (const q of queries) {
-    try {
-      const r = await fetch('https://api.allorigins.win/raw?url=' +
-        encodeURIComponent(`https://www.mojedelo.com/rss/dela?q=${q}`));
-      if (!r.ok) continue;
-      const xml = await r.text();
-      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const get = tag =>
-          item.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`))?.[1] ??
-          item.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`))?.[1] ?? '';
-        const title = get('title').replace(/<[^>]*>/g,'').trim();
-        const link  = get('link');
-        const pubDate = get('pubDate');
-        const desc  = get('description').replace(/<[^>]*>/g,' ').trim();
-        const company = get('author') || get('dc:creator') || '';
-        if (!title || !matchesMarketing(`${title} ${desc}`)) continue;
-        const type = /hybrid|hibrid/i.test(desc) ? 'hybrid' : 'remote';
-        jobs.push({
-          id: 'md-' + (link.split('/').pop() || i),
-          title, company: company || 'Podjetje',
-          logo: '', location: 'Slovenija',
-          type, salary: '',
-          tags: extractTags(`${title} ${desc}`),
-          postedAt: pubDate ? timeAgo(pubDate) : 'Nedavno',
-          url: link, source: 'MojeDelo', si: true,
-        });
-      }
-    } catch {}
-  }
-  return jobs;
+  } catch(e) { console.error('WWR error', e); return []; }
 }
 
 async function loadJobs() {
   renderSkeletons();
-  const [si, a, b] = await Promise.allSettled([fetchMojeDelo(), fetchRemotive(), fetchWWR()]);
-  const slovenian = si.status==='fulfilled' ? si.value : [];
-  const global_   = [
+  const [a, b] = await Promise.allSettled([fetchRemotive(), fetchWWR()]);
+  const jobs = [
     ...(a.status==='fulfilled'?a.value:[]),
     ...(b.status==='fulfilled'?b.value:[]),
   ];
-  // Slovenian first, then worldwide/EU
   const seen = new Set();
-  allJobs = [...slovenian, ...global_].filter(j => {
+  allJobs = jobs.filter(j => {
     const k = `${j.title.toLowerCase().trim()}-${j.company.toLowerCase().trim()}`;
     if (seen.has(k)) return false;
     seen.add(k); return true;
   });
+  if (allJobs.length === 0) {
+    document.getElementById('job-list').innerHTML = '';
+    document.getElementById('error').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('error').classList.add('hidden');
   updateStats();
   render();
 }
