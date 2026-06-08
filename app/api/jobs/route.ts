@@ -104,6 +104,103 @@ async function fetchWeworkremotely(): Promise<Job[]> {
   }
 }
 
+async function fetchJobicy(): Promise<Job[]> {
+  const tags = ["marketing", "advertising", "social-media", "paid-social", "ppc", "seo-sem"];
+  const all: Job[] = [];
+  for (const tag of tags) {
+    try {
+      const res = await fetch(`https://jobicy.com/api/v0/remote-jobs?count=50&tag=${tag}`, {
+        next: { revalidate: 1800 },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const j of data.jobs ?? []) {
+        const loc = j.jobGeo || "Worldwide";
+        if (!accessibleFromSlovenia(loc)) continue;
+        const text = `${j.jobTitle} ${j.jobExcerpt ?? ""} ${j.jobDescription ?? ""}`;
+        if (!matchesMarketing(text)) continue;
+        all.push({
+          id: `jcy-${j.id}`,
+          title: j.jobTitle,
+          company: j.companyName,
+          companyLogo: j.companyLogo || undefined,
+          location: loc,
+          type: "remote",
+          salary: j.annualSalaryMin ? `$${Math.round(j.annualSalaryMin / 1000)}k–$${Math.round(j.annualSalaryMax / 1000)}k` : undefined,
+          tags: extractTags(text),
+          postedAt: timeAgo(j.pubDate),
+          url: j.url,
+          source: "Jobicy",
+        });
+      }
+    } catch { /* skip */ }
+  }
+  return all;
+}
+
+async function fetchArbeitnow(): Promise<Job[]> {
+  try {
+    const res = await fetch("https://arbeitnow.com/api/job-board-api", {
+      next: { revalidate: 1800 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.data ?? [])
+      .filter((j: { remote: boolean }) => j.remote)
+      .map((j: { slug: string; title: string; company_name: string; location: string; remote: boolean; created_at: number; url: string; description?: string; tags?: string[] }) => {
+        const text = `${j.title} ${j.description ?? ""} ${(j.tags ?? []).join(" ")}`;
+        if (!matchesMarketing(text)) return null;
+        return {
+          id: `an-${j.slug}`,
+          title: j.title,
+          company: j.company_name,
+          location: j.location || "Europe",
+          type: "remote" as const,
+          tags: extractTags(text),
+          postedAt: timeAgo(new Date(j.created_at * 1000).toISOString()),
+          url: j.url,
+          source: "Arbeitnow",
+        } satisfies Job;
+      })
+      .filter(Boolean) as Job[];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchTheMuse(): Promise<Job[]> {
+  try {
+    const res = await fetch(
+      "https://www.themuse.com/api/public/jobs?category=Marketing+%26+PR&page=1&page_size=100&descending=true",
+      { next: { revalidate: 1800 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results ?? [])
+      .map((j: { id: number; name: string; company?: { name?: string }; locations?: { name: string }[]; contents?: string; publication_date?: string; refs?: { landing_page?: string } }) => {
+        const locs = (j.locations ?? []).map((l) => l.name).join(", ") || "Worldwide";
+        const isRemote = locs.toLowerCase().includes("remote") || locs.toLowerCase().includes("flexible");
+        if (!isRemote) return null;
+        const text = `${j.name} ${j.contents ?? ""}`;
+        if (!matchesMarketing(text)) return null;
+        return {
+          id: `muse-${j.id}`,
+          title: j.name,
+          company: j.company?.name ?? "",
+          location: locs,
+          type: "remote" as const,
+          tags: extractTags(text),
+          postedAt: j.publication_date ? timeAgo(j.publication_date) : "Recently",
+          url: j.refs?.landing_page ?? "",
+          source: "The Muse",
+        } satisfies Job;
+      })
+      .filter(Boolean) as Job[];
+  } catch {
+    return [];
+  }
+}
+
 export async function GET() {
   const results = await Promise.allSettled([
     fetchMojeDelo(),
@@ -111,6 +208,9 @@ export async function GET() {
     fetchZaposlitev(),
     fetchRemotive(),
     fetchWeworkremotely(),
+    fetchJobicy(),
+    fetchArbeitnow(),
+    fetchTheMuse(),
   ]);
 
   const jobs: Job[] = results.flatMap((r) =>
